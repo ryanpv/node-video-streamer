@@ -4,7 +4,7 @@ const fs = require("fs");
 
 const s3upload = async (req, res) => {
   try {
-    fs.readdir("/server/videos", (err, files) => {
+    fs.readdir("../playlist_files", (err, files) => {
       if (err) {
         console.log("readdir error: ", err);
         process.exit(1)
@@ -32,5 +32,7 @@ const s3upload = async (req, res) => {
   } catch (error) {
     console.log("Error with s3 upload", error)
   }
-}
+};
+
+module.exports = s3upload;
 
