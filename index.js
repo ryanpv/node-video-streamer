@@ -11,6 +11,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/test-route", (req, res) => {
+  console.log("test route hit")
   res.send("<a href='/'>Go to home</a>")
 })
 
