@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Link for no favicon  -->
+  <link rel="icon" href="data:,">
+  <title>Node Video Streaming Server</title>
+</head>
+<body>
+  <h2>File Upload With <code>"Node.js"</code></h2>
+  <form action="/video-upload" enctype="multipart/form-data" method="post">
+    <div>Select a file: 
+      <input type="file" name="file" multiple="multiple" />
+    </div>
+    <input type="submit" value="Upload" />
+  </form>
+  
+  <br><br>
+  <a href="/test-route">Go to test route</a>
+</body>
+</html>

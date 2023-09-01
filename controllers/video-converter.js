@@ -1,10 +1,13 @@
+const fs = require("fs");
 const ffmpegStatic = require("ffmpeg-static");
 const ffmpeg = require("fluent-ffmpeg");
 ffmpeg.setFfmpegPath(ffmpegStatic);
 
 const videoConverter = (req, res) => {
-  const inputVal = "videos/taxi-japan-1080p.mp4"
-  console.time('converter/videos uri');
+  const inputVal = `./videos/${ req.fileName }`
+  // console.time('converter/videos uri');
+  console.log("input: ", inputVal)
+
   ffmpeg()
     .input(inputVal)
     .addOptions([
@@ -16,7 +19,7 @@ const videoConverter = (req, res) => {
       '-hls_list_size 0',
       '-f hls'
     ])
-    .output("thread_output/taxiJapan.m3u8")
+    .output("./playlist_files/taxiJapan.m3u8")
     .on("error", (error) => {
       console.log("error: ", error)
     })
@@ -25,9 +28,11 @@ const videoConverter = (req, res) => {
     })
     .on("end", () => {
       console.log('ending coversion');
-      console.timeEnd('converter/videos uri')
+      // console.timeEnd('converter/videos uri')
     })
     .run();
+
+    res.send("<a href='/'>Back to home.</a>");
 };
 
 module.exports = videoConverter;
