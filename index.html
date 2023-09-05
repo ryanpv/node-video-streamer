@@ -16,6 +16,31 @@
     </div>
     <input type="submit" value="Upload" />
   </form>
+  <hr><hr>
+
+  <video id="video" width="500" height="500" controls>
+  </video>
+
+  <script src="https://cdn.jsdelivr.net/npm/hls.js"></script>
+<script>
+  const video = document.getElementById("video");
+  const videoSrc = "user1_rain.m3u8";
+
+  if (Hls.isSupported()) {
+    const hls = new Hls();
+
+    hls.loadSource(videoSrc);
+    hls.attachMedia(video);
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      video.play();
+    })
+  } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+    video.src = videoSrc;
+    video.addEventListener("loadedmetadata", () => {
+      video.play();
+    })
+  }
+</script>
   
   <br><br>
   <a href="/test-route">Go to test route</a>
