@@ -6,7 +6,7 @@ const ffmpegStatic = require("ffmpeg-static");
 const ffmpeg = require("fluent-ffmpeg");
 ffmpeg.setFfmpegPath(ffmpegStatic);
 
-const videoConverter = async (req, res) => {
+const videoConverter = async (req, res, next) => {
   try {
     const writeStream = fs.createWriteStream(`${ req.tempDir }/${ req.file.originalname }`)
     streamifier.createReadStream(req.file.buffer).pipe(writeStream)
@@ -45,9 +45,9 @@ const videoConverter = async (req, res) => {
       } else {
         console.log("no temp dir found");
       }
-    });
-  
-      res.send("<a href='/'>Back to home.</a>");
+    })
+    
+      // res.send("<a href='/'>Back to home.</a>");
   } catch (error) {
     console.log("some error during conversion: ", error)
   } 
