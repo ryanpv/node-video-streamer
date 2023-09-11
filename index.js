@@ -1,4 +1,5 @@
 const express = require("express");
+const cors = require("cors");
 const videoConverter = require("./controllers/video-converter");
 const storeVideos = require("./controllers/store-videos");
 require("dotenv").config({ path: "./config.env"});
@@ -9,10 +10,12 @@ const s3SignedUrl = require("./controllers/getSIgnedUrl");
 
 const app = express();
 const PORT = 9191
+app.use(cors());
 app.use(express.json());
 
 // Middleware to check for hls requests vs regular http requests
 app.use((req, res, next) => {
+  console.log("incoming req: ", req.url)
   if (req.url.includes(".m3u8") && !req.url.includes("redirected") || req.url.includes(".ts") && !req.url.includes("redirected")) {
     console.log("Reached middleware", req.url.split("/redirected")[0])
     res.redirect("/redirected" + req.url)
@@ -27,7 +30,7 @@ app.get("/", (req, res) => {
   res.sendFile(__dirname + "/index.html")
 });
 
-app.get("/getVideo", getVideo)
+app.get("/get-video", getVideo)
 app.get("/get-file", s3SignedUrl)
 
 

@@ -18,30 +18,39 @@
   </form>
   <hr><hr>
 
-  <video id="video" width="500" height="500" controls>
+  <video id="video" width="500" height="500" controls crossorigin="anonymous">
+    <!-- <source src="/get-video"> -->
   </video>
 
   <script src="https://cdn.jsdelivr.net/npm/hls.js"></script>
-<script>
-  const video = document.getElementById("video");
-  // const videoSrc = "user1_rain.mp4.m3u8";
-  const videoSrc = "/getVideo"
+  <script>
+    (async function fetchFunct() {
+      const fetcher = await fetch("http://localhost:9191/get-file")
+      const getvid = await fetcher.json()
 
-  if (Hls.isSupported()) {
-    const hls = new Hls();
+      const video = document.getElementById("video");
+      // const videoSrc = "user1_rain.mp4.m3u8";
+      const videoSrc = getvid.cloudfrontUrl
+      console.log("vid source: ", getvid.cloudfrontUrl)
 
-    hls.loadSource(videoSrc);
-    hls.attachMedia(video);
-    hls.on(Hls.Events.MANIFEST_PARSED, () => {
-      video.play();
-    })
-  } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-    video.src = videoSrc;
-    video.addEventListener("loadedmetadata", () => {
-      video.play();
-    })
-  }
-</script>
+      if (Hls.isSupported()) {
+        const hls = new Hls();
+
+        hls.loadSource(videoSrc);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          video.play();
+        })
+      } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        console.log("else if statement");
+        video.src = videoSrc;
+        video.addEventListener("loadedmetadata", () => {
+          video.play();
+        })
+      }
+
+    })();
+  </script>
   
   <br><br>
   <a href="/test-route">Go to test route</a>

@@ -11,9 +11,9 @@ const getVideo = async (req, res) => {
 
   const response = await client.send(fetcher);
   // await response.Body.pipe(createWriteStream("tester"));
-  const sendHLS = await response.Body.transformToByteArray();;
+  const sendHLS = await response.Body;
   res.writeHead(206, { "Access-Control-Allow-Origin": "*" });
-  console.log(await response.Body.transformToString());
+  console.log(await response.Body);
 
   res.send(sendHLS);
   // res.end();

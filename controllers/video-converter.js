@@ -23,7 +23,7 @@ const videoConverter = async (req, res, next) => {
             '-hls_list_size 0',
             '-f hls'
           ])
-          .output(`./playlist_files/user1_${ req.file.originalname }.m3u8`)
+          .output(`./playlist_files/user1_${ req.file.originalname }.m3u8`) // output direct upload to s3???
           .on("error", (error) => {
             console.log("error: ", error)
             reject(error)
