@@ -7,16 +7,19 @@ const getVideo = async (req, res) => {
   const fetcher = new GetObjectCommand({
     Bucket: "rv-videos-bucket",
     Key: "user1_rain.mp4.m3u8"
+    // Key: "testFile.txt"
   });
 
   const response = await client.send(fetcher);
-  // await response.Body.pipe(createWriteStream("tester"));
-  const sendHLS = await response.Body;
-  res.writeHead(206, { "Access-Control-Allow-Origin": "*" });
-  console.log(await response.Body);
 
-  res.send(sendHLS);
-  // res.end();
+  // const streamData = await response.Body.pipe(createWriteStream("tester")); // streams file contents to a file named "tester" (used to test txt/plain file)
+
+  const sendHLS = await response.Body.transformToString(); // reads requested file contents and returns as string
+  console.log("hls return: ", sendHLS)
+  res.writeHead(206, { "Access-Control-Allow-Origin": "*" });
+
+  // res.send(sendHLS); // cant be used with res.writeHead()
+  res.end(sendHLS);
 }
 
 module.exports = getVideo
