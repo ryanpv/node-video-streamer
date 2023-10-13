@@ -2,3 +2,4 @@ config.env
 node_modules
 videos
 cert
+playlist_files

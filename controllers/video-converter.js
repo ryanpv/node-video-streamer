@@ -18,10 +18,10 @@ const videoConverter = async (req, res, next) => {
             '-c:v libx264',
             '-profile:v baseline',
             '-level 3.0',
-            '-start_number 0',
-            '-hls_time 6',
+            '-start_number 0', // media timestamp to start the conversion
+            '-hls_time 6', // segment size - approximate only
             '-hls_list_size 0',
-            '-f hls'
+            '-f hls' // format
           ])
           .output(`./playlist_files/user1_${ req.file.originalname }.m3u8`) // output direct upload to s3???
           .on("error", (error) => {
@@ -45,6 +45,7 @@ const videoConverter = async (req, res, next) => {
       } else {
         console.log("no temp dir found");
       }
+      next();
     })
     
       // res.send("<a href='/'>Back to home.</a>");

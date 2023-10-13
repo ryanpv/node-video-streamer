@@ -5,8 +5,12 @@ const path = require("path");
 
 const storeVideos = async (req, res, next) => {
   const multerStore = multer.memoryStorage()
+
+  // Uses memory instead of disk
   const upload = multer({ storage: multerStore }).single("file");
   const appPrefix = "testing-temp";
+
+  // mkdir synchronously
   let tempDir = fs.mkdtempSync(path.join(os.tmpdir(), appPrefix))
   req.tempDir = tempDir
 
