@@ -18,9 +18,9 @@ const s3SignedUrl = async (req, res) => {
 
   const newUrl = `${ item }&Expires-PREFIX=${ urlQueryParams.Expires }&Key-Pair-Id-PREFIX=${ urlQueryParams['Key-Pair-Id'] }&Signature-PREFIX=${ urlQueryParams.Signature }`
 
-  console.log("RESULT", item)
+  console.log("SIGNED URL RESULT", item)
   // console.log("NEW URL: ", newUrl)
-  console.log("PARSED url: ", url.parse(newUrl, true).query) // returns separation of query params
+  // console.log("PARSED url: ", url.parse(newUrl, true).query) // returns separation of query params
   res.send({ cloudfrontUrl: item })
 };
 

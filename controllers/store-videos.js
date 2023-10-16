@@ -4,21 +4,22 @@ const os = require("os");
 const path = require("path");
 
 const storeVideos = async (req, res, next) => {
-  const multerStore = multer.memoryStorage()
-
   // Uses memory instead of disk
-  const upload = multer({ storage: multerStore }).single("file");
-  const appPrefix = "testing-temp";
+  const multerStore = multer.memoryStorage()
+  // Accepts single file, which is stored in req.file
+  const upload = multer({ storage: multerStore }).single("file"); 
+  const clientUploadTempDir = "client-upload"
 
-  // mkdir synchronously
-  let tempDir = fs.mkdtempSync(path.join(os.tmpdir(), appPrefix))
+  // Make temp dir synchronously for client's media upload
+  let tempDir = fs.mkdtempSync(path.join(os.tmpdir(), clientUploadTempDir))
   req.tempDir = tempDir
 
   upload(req, res, (err) => {
     if (err) {
       console.log("multer err: ", err)
     }
-    return next(); // next must be called inside upload otherwise it will run before req.fileName is set
+    // next must be called inside upload otherwise it will run before req.fileName is set
+    return next(); 
   });
 };
 

@@ -1,15 +1,25 @@
 const fs = require("fs");
+// Library to be able to stream from a buffer
 const streamifier = require("streamifier");
 const os = require("os");
-const path = require("path");
 const ffmpegStatic = require("ffmpeg-static");
 const ffmpeg = require("fluent-ffmpeg");
+const path = require("path");
 ffmpeg.setFfmpegPath(ffmpegStatic);
 
 const videoConverter = async (req, res, next) => {
   try {
-    const writeStream = fs.createWriteStream(`${ req.tempDir }/${ req.file.originalname }`)
+    // Stream the file data as buffer into the created temp dir
+    // Writes to ffmpeg input location
+    const writeStream = fs.createWriteStream(`${ req.tempDir }/${ req.file.originalname }`);
+
+    // Streamifier library to be able to stream the file buffer, which is stored in memory by multer library
     streamifier.createReadStream(req.file.buffer).pipe(writeStream)
+
+    // mkdtempSync() to create temp dir to store media conversion output
+    const tempOutputDirPrefix = "ffmpegTempDir-";
+    let tempOutputDir = fs.mkdtempSync(path.join(os.tmpdir(), tempOutputDirPrefix));
+    req.tempOutputDir = tempOutputDir
 
     const convertVideo = new Promise((resolve, reject) => {
         ffmpeg()
@@ -23,7 +33,7 @@ const videoConverter = async (req, res, next) => {
             '-hls_list_size 0',
             '-f hls' // format
           ])
-          .output(`./playlist_files/user1_${ req.file.originalname }.m3u8`) // output direct upload to s3???
+          .output(tempOutputDir + "/" + req.file.originalname)
           .on("error", (error) => {
             console.log("error: ", error)
             reject(error)
@@ -32,8 +42,7 @@ const videoConverter = async (req, res, next) => {
             console.log("progress, ", progress.timemark)
           })
           .on("end", () => {
-            console.log('conversion has ended.');
-            // console.timeEnd('converter/videos uri')
+            console.log('Media conversion has ended.');
             resolve('conversion has ended.');
           })
           .run()
@@ -41,12 +50,13 @@ const videoConverter = async (req, res, next) => {
 
     convertVideo.then(() => {
       if (req.tempDir) {
+        // Delete temp dir for initial client media file upload
         fs.rmSync(req.tempDir, { recursive: true });
       } else {
         console.log("no temp dir found");
       }
       next();
-    })
+    });
     
       // res.send("<a href='/'>Back to home.</a>");
   } catch (error) {

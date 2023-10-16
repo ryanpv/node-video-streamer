@@ -29,7 +29,7 @@
       const getvid = await fetcher.json()
 
       const video = document.getElementById("video");
-      const videoSrc = getvid.cloudfrontUrl
+      // const videoSrc = getvid.cloudfrontUrl
 
       if (Hls.isSupported()) {
         const hls = new Hls();
