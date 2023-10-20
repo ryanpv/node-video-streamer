@@ -23,7 +23,7 @@ const s3upload = async (req, res) => {
             client: new S3Client,
             params: {
               Bucket: process.env.S3_BUCKET,
-              Key: `${ file }`,
+              Key: `lambda_test/${ file }`,
               Body: fs.createReadStream(req.tempOutputDir + "/" + file),
               ContentType: path.extname(file) === ".ts" ? "video/MP2T" : "application/x-mpegURL",
             },
