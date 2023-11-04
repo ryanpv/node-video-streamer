@@ -9,7 +9,7 @@
   <title>Node Video Streaming Server</title>
 </head>
 <body>
-  <h2>File Upload With <code>"Node.js"</code></h2>
+  <h2 class="bg-red-300">File Upload With <code>"Node.js"</code></h2>
   <form action="/video-upload" enctype="multipart/form-data" method="post">
     <div>Select a file: 
       <input type="file" name="file" multiple="multiple" />
@@ -18,10 +18,23 @@
   </form>
   <hr><hr>
 
-  <video id="video" width="500" height="500" controls crossorigin="anonymous">
-    <!-- <source src="/get-video"> -->
-  </video>
+  <div>
+    <!-- <div class="flex bg-white shadow-md rounded-lg overflow-hidden mx-auto"> -->
+      <div class="flex flex-col m-5">
+        <div class="mx-auto">
+          <video id="video" width="1280" height="720" controls crossorigin="anonymous">
+            <!-- <source src="/get-video"> -->
+          </video>
+        </div>
+        </div>
+      </div>
+    <!-- </div> -->
+  </div>
 
+
+
+
+  <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js"></script>
   <script>
     (async function fetchFunct() {
@@ -29,7 +42,7 @@
       const getvid = await fetcher.json()
 
       const video = document.getElementById("video");
-      // const videoSrc = getvid.cloudfrontUrl
+      const videoSrc = getvid.cloudfrontUrl
 
       if (Hls.isSupported()) {
         const hls = new Hls();

@@ -33,7 +33,7 @@ const videoConverter = async (req, res, next) => {
             '-hls_list_size 0',
             '-f hls' // format
           ])
-          .output(tempOutputDir + "/" + req.file.originalname)
+          .output(`${ tempOutputDir }/testUser_${ req.file.originalname}.m3u8`)
           .on("error", (error) => {
             console.log("error: ", error)
             reject(error)
