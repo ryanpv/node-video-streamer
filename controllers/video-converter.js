@@ -9,6 +9,10 @@ ffmpeg.setFfmpegPath(ffmpegStatic);
 
 const videoConverter = async (req, res, next) => {
   try {
+    // Temp check for if file is not received from client
+    if (!req.file) {
+      res.status(400).send("400 BAD REQUEST. No file received at server. <a href='/'>Back to home.</a>")
+    }
     // Stream the file data as buffer into the created temp dir
     // Writes to ffmpeg input location
     const writeStream = fs.createWriteStream(`${ req.tempDir }/${ req.file.originalname }`);
@@ -60,7 +64,6 @@ const videoConverter = async (req, res, next) => {
       next();
     });
     
-      // res.send("<a href='/'>Back to home.</a>");
   } catch (error) {
     console.log("some error during conversion: ", error)
   } 
