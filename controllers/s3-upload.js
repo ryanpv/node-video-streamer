@@ -13,6 +13,7 @@ const s3upload = async (req, res) => {
         process.exit(1)
       };
 
+      // Promise to upload HLS files to S3
       const mediaUpload = new Promise ((resolve, reject) => {
         if (!files) reject("Error with directory.");
 
@@ -39,6 +40,7 @@ const s3upload = async (req, res) => {
         });
       });
 
+      // Remove temp dir that holds converted files after upload promise complete
       mediaUpload.then(() => {
         if (req.tempOutputDir) {
           // Delete temp dir for converted media files

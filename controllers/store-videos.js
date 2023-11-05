@@ -14,6 +14,7 @@ const storeVideos = async (req, res, next) => {
   let tempDir = fs.mkdtempSync(path.join(os.tmpdir(), clientUploadTempDir))
   req.tempDir = tempDir
 
+  // Call multer method to store the file in memory (temp directory)
   upload(req, res, (err) => {
     if (err) {
       console.log("multer err: ", err)

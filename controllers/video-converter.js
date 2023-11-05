@@ -21,6 +21,7 @@ const videoConverter = async (req, res, next) => {
     let tempOutputDir = fs.mkdtempSync(path.join(os.tmpdir(), tempOutputDirPrefix));
     req.tempOutputDir = tempOutputDir
 
+    // Video conversion to HLS
     const convertVideo = new Promise((resolve, reject) => {
         ffmpeg()
           .input(`${ req.tempDir }/${ req.file.originalname }`)
@@ -48,6 +49,7 @@ const videoConverter = async (req, res, next) => {
           .run()
     });
 
+    // Removes temp directory that holds client upload pre-conversion once video conversion promise is resolved
     convertVideo.then(() => {
       if (req.tempDir) {
         // Delete temp dir for initial client media file upload
