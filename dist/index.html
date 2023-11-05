@@ -9,7 +9,7 @@
   <title>Node Video Streaming Server</title>
 </head>
 <body>
-  <h2 class="bg-red-300">File Upload With <code>"Node.js"</code></h2>
+  <h2>File Upload With <code>"Node.js"</code></h2>
   <form action="/video-upload" enctype="multipart/form-data" method="post">
     <div>Select a file: 
       <input type="file" name="file" multiple="multiple" />
@@ -33,7 +33,7 @@
   <script src="https://cdn.jsdelivr.net/npm/hls.js"></script>
   <script>
     (async function fetchFunct() {
-      const fetcher = await fetch("http://localhost:9191/get-file")
+      const fetcher = await fetch("http://localhost:9191/get-signed-video")
       const getvid = await fetcher.json()
 
       const video = document.getElementById("video");

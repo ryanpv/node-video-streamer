@@ -1,15 +1,12 @@
 const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/cloudfront-signer");
 
-const { createWriteStream } = require("fs")
-
 const getVideo = async (req, res) => {
   console.log("reached getVideo: ", req.url)
   const client = new S3Client({});
   const fetcher = new GetObjectCommand({
     Bucket: "rv-videos-bucket",
     Key: "user1_rain.mp4.m3u8"
-    // Key: "testFile.txt"
   });
 
   const response = await client.send(fetcher);
@@ -18,7 +15,6 @@ const getVideo = async (req, res) => {
 
   const sendHLS = await response.Body.transformToString(); // reads requested file contents and returns as string
 
-  console.log("OLD HLS FORMAT: ", sendHLS)
   const manifestArr = sendHLS.split("\n")
 
   const newArr = manifestArr.map(el => {
@@ -39,11 +35,7 @@ const getVideo = async (req, res) => {
   });
 
   newArr.pop()
-
   const updatedManifestFile = newArr.join("")
-  
-  console.log("hls return: ", newArr.join(""))
-
 
   res.writeHead(206, { "Access-Control-Allow-Origin": "*" });
 

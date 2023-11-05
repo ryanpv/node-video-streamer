@@ -18,7 +18,6 @@ const s3upload = async (req, res) => {
 
         // Loop through temp directory to upload manifest file and each related .ts segment file
         files.forEach(async (file) => {
-          console.log("file: ", file)
           const uploadFile = new Upload({
             client: new S3Client,
             params: {
