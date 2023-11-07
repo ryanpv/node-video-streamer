@@ -14,22 +14,22 @@ In addition, I have implemented video upload functionality from the client, HLS 
 
 The AWS services I am using to stream the videos are CloudFront, API Gateway, Lambda, and S3. To add some layers of protection for resources stored in S3, the bucket is configured to block all public access and restricting access through CloudFront signed URLs. Serving files through a CloudFront CDN enhances performance. CDNs optimize performance by reducing physical distance between the data and client. Data is served from the closest CDN cache location. Additionally, CDNs will use minification and file compression behind the scenes to improve the speeds for content delivery. The API Gateway and Lambda functions are used to fetch the manifest file and sign the “.ts” segments.
 
-## IAM ROLE POLICIES:
+### IAM ROLE POLICIES:
 
 I created a role in IAM services using the principle of least privilege to limit it to specific permissions. This should be implemented as much as possible with role-based access control (RBAC). The necessary permissions used for this project are:
 1. AmazonS3ReadOnlyAccess
 2. A custom permission policy to allow resources to assume this role and invoke Lambda functions:
-     o Policy reference: https://docs.aws.amazon.com/apigateway/latest/developerguide/permissions.html
-     o In the IAM console, using the link follow “API Gateway permissions model for invoking an API”.
+     * Policy reference: https://docs.aws.amazon.com/apigateway/latest/developerguide/permissions.html
+     * In the IAM console, using the link follow “API Gateway permissions model for invoking an API”.
 First policy statement goes under the IAM role’s “Trust relationships” and the second goes under “Permission policies” in the “Permissions tab”. Trust relationships are necessary because they specify which resources can assume this role. The link above provides the trust policy JSON, but Lambda needs to be added to the list of services.
 
-## S3 BUCKET SETUP:
+### S3 BUCKET SETUP:
 
 Initial setup for the S3 bucket is simple. A single S3 bucket is used to store all “.m3u8” and “.ts” files. Upon creation, all settings are kept default other than the bucket name. Most important configuration is the “Block all public access” as it limits access to the stored S3 objects. This should also be the default configuration. To allow access to the S3 bucket, its policy must list the specific service(s) as well as the action(s). This project uses CloudFront to access S3, therefore it is included in the S3 policy statement. Fortunately, AWS makes adding the permissions policy easy by providing it automatically when we setup CloudFront. This will be discussed in more detail during the CloudFront setup.
 
 An important note for this project specifically is that the S3 path parameters of where the “.ts” files are stored in MUST match the path parameters of our API gateway. This necessity is due to the behaviour of the HLS protocol. It retrieves the “.ts” file segments by using the same request URL but replaces the only “.m3u8” file name path parameter with the “.ts” segment file name. For example, the request URL may look something like “https://1a2b3.CloudFront.net/lambda_test/requestedFile.m3u8”. When it’s time for the “.ts” file to be fetched, it will replace the “.m3u8” parameter in the request URL, which would look like “https://1a2b3.CloudFront.net/lambda_test/requestedFileSegment.ts” instead. To successfully retrieve all “.ts” files, this project is configured to store all objects in a folder “/lambda_test” to match the API gateway path that is used.
 
-## API GATEWAY SETUP PART 1:
+### API GATEWAY SETUP PART 1:
 
 To build the API Gateway, I selected the “REST API” type. AWS states that although this may potentially increase cost compared to the “HTTP API”, which is limited in services, the REST API option can provide better flexibility with integrated services. After selecting the “API type”, I configured it as a “New API” and opted for “Edge-optimized” for the “API endpoint type”. On top of using a CloudFront CDN, this will enhance the performance and scalability for this project.
 
@@ -40,3 +40,9 @@ Next, I created a resource by navigating to the “Resources” section on the s
 Before integrating Lambda with the API, a method needs to be attached to the resource. To create a method, navigate to the specific resource and click on the “Create method” button. There are multiple “Integration type” options, but since we are using Lambda functions I selected “Lambda Proxy” with a GET “Method type”. The settings can be modified anytime so at this time the “Lambda function” input can be left blank. Once a method is created, it will show up under that specific resource. After completing the setup, the API must be deployed, which is done by using the “Deploy API” button. Select the stage that is currently in use, such as development/production. However, in my case, I stuck with my “tester” stage. Whenever any changes are made to the API under the “Resources” section, the API must be redeployed for the changes to take effect.
 
 This concludes the first part of the API gateway setup. We will return to the “Integration request” configuration after setting up the Lambda function.
+
+### LAMBDA FUNCTION SETUP:
+
+The main purpose of the Lambda function will be to fetch “.m3u8” files and sign the “.ts” segments in the “.m3u8” file before returning it to the client. To create the Lambda function, I chose “Author from scratch” with a “Node.js 18x” “Runtime” configuration. With the IAM role already created, it can be selected under the “Change default execution role” drop down.
+
+![HLS-Lambda-Function](https://github.com/ryanpv/node-video-streamer/blob/main/public/HSL Lambda Func.png)
