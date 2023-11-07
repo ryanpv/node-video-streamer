@@ -19,7 +19,7 @@ The AWS services I am using to stream the videos are CloudFront, API Gateway, La
 I created a role in IAM services using the principle of least privilege to limit it to specific permissions. This should be implemented as much as possible with role-based access control (RBAC). The necessary permissions used for this project are:
 1. AmazonS3ReadOnlyAccess
 2. A custom permission policy to allow resources to assume this role and invoke Lambda functions:
-     * Policy reference: https://docs.aws.amazon.com/apigateway/latest/developerguide/permissions.html
+     * Policy reference: [API gateway permissions to invoke Lambda function](https://docs.aws.amazon.com/apigateway/latest/developerguide/permissions.html)
      * In the IAM console, using the link follow “API Gateway permissions model for invoking an API”.
 First policy statement goes under the IAM role’s “Trust relationships” and the second goes under “Permission policies” in the “Permissions tab”. Trust relationships are necessary because they specify which resources can assume this role. The link above provides the trust policy JSON, but Lambda needs to be added to the list of services.
 
@@ -57,5 +57,69 @@ The picture above is a screenshot of the Lambda function. To store the private k
      * The initial splitting of the lines will include an additional line at the end that is an empty string. This* must be removed for the playlist to work.
 5. Return the modified “.m3u8” as the response body.
 
-Typically, CloudFront sends an event object with the request/response data accessible by “event.Resource[0].cf”. However, the integration of API gateway as an origin will change this formatting. For Lambda to be able to send a successful response, it will have to use the same formatting.
-    * See link for proper response format: https://docs.aws. amazon.com/lambda/latest/dg/services-apigateway.html#apigateway-example-event
+Typically, CloudFront sends an event object with the request/response data accessible by “event.Resource[0].cf”. However, the integration of API gateway as an origin will change this formatting. For Lambda to be able to send a successful response, it will have to use the same formatting. 
+  * See link for proper response format: [Lambda response object format for API gateway](https://docs.aws.amazon.com/lambda/latest/dg/services-apigateway.html#apigateway-example-event)
+
+### API GATEWAY SETUP PART 2:
+
+To make updates an easier process for API gateway with Lambda integration, I use “Stage variables”. These can be added by navigating to the “Stages” section from the side panel. Stage variables allow us to reference the Lambda function version instead of changing the entire ARN in API gateway. This helps to avoid redeploying the app after each Lambda function version update, which would save time and resources while developing the API.
+
+These are the simple steps to integrate the Lambda function:
+
+1. Navigate to “Resources” section on side panel.
+2. Select the resource method being used.
+3. Click the “Integration request” tab and click “Edit”.
+4. Select “Lambda function” as the “Integration type”.
+5. Toggle “Lambda proxy integration” to use the stage variables as a placeholder for the Lambda function version in the ARN.
+     * ARN for the Lambda function should look something like this: “arn:aws:lambda:us-east-1:123456789876:function:lambdaFunctionName:${stageVariables.stageVariableName}”
+6. Paste in the same execution role ARN that is attached to the Lambda function.
+
+This completes the entire API gateway setup. Next step is the CloudFront CDN setup.
+
+### CLOUDFRONT CDN SETUP:
+Before beginning the CloudFront distribution setup, I generated a public and private key using OpenSSL. These keys will be used to sign the URLs and for CloudFront to verify signatures. Any library that generates a key pair like this can be used. Once that was completed, I went through these steps:
+
+1. Click on “Key management” in the side panel and then “Public keys”.
+2. Click on the “Create public key” button and fill out the form using the public key generated with OPENSSL before clicking the create button again.
+     * The “ID” of this generated from this step is what we use to sign the CloudFront URLs.
+3. Next, under the same section of the side panel click on “Key groups” and create a key group using the newly added public key.
+     * This key group is used later with CloudFront behaviour settings.
+Once I have completed those steps, I created a CloudFront distribution through the “Distributions” section on the side panel. The initial setup will ask to specify one origin, but more can always be added later.
+
+#### CloudFront origins setup:
+Origins are the AWS resources that are accessed through CloudFront. Only two are needed for this project: API gateway and S3. Configurations for both origins are similar. These are the steps:
+
+1. Clicking on “Create origin” button opens a “Settings” form.
+2. Select API gateway as the “Origin domain”.
+     * You will notice after selection the name is transformed to the APIs invoke URL. This is how CloudFront accesses services and their resources, hence why it has an option for “Origin path”.
+3. For an added layer of protection, “HTTPS only” is used for the protocol.
+4. “Origin path” is optional, but since my API is deployed under the “tester” stage, where all my resources are located, I must specify it as the path to access it.
+5. The rest of the settings I have left as default.
+
+After completion of this origin configuration, I added another origin for the S3 bucket. If objects are stored in a folder in S3, we can either add an “Origin path” here to properly access them or specify them in the key when fetching with the AWS SDK. For this configuration, I have also selected “Origin access control settings (recommended)” then selected the S3 bucket for “Origin access control”. This setting enhances security by restricting the bucket access to only CloudFront signed URLs. AWS provides a prompt stating that you must allow CloudFront access and includes a pre-written policy that can be copied and pasted the S3 bucket permission. The rest of the settings can be left as default.
+
+#### CloudFront behaviors setup:
+
+Moving on to the “Behaviors” tab under the CloudFront distribution, I create behaviours that describe how CloudFront handles incoming requests based on path patterns, such as “/param1/mediaFile.m3u8”. Query parameters are excluded from these rules. If a request URL params matches the path pattern of a specific behaviour, CloudFront will use it. However, since it is possible to have more than one behaviour, CloudFront decides which to use depending behaviour’s precedence. The precedence are shown beside the corresponding behaviors. Behaviour precedence is 0-indexed, so like an array the 0 index comes first. To describe an example, when a behaviour is created, but no “Path pattern” is set then CloudFront will use a “Default (*)” path. This path will accept all requests with different path patterns. However, if another behaviour is created and its precedence is moved before (I.e. New behaviour set with precedence 0 and Default (*) behaviour with precedence 1) then only the new behaviour would be used if the request path matches. Therefore, “Default (*)” pattern can be problematic. If it is necessary at all in a distribution, then I recommend it being placed at the highest precedence value (last). To change the precedence in the "Behaviors" tab, select the radio input of the behaviour and click “Move up” or “Move down”.
+
+For this project, only two behaviours are used for the path patterns “*.m3u8” and “*.ts”. The “*” in the path represent wildcards. Both behaviours are configured similarly. For the “*.m3u8” behaviour, the origin is set as the API gateway created earlier. The origin for the “*.ts” behaviour is the S3 bucket.
+
+The following are the steps for configuring these behaviours:
+
+1. Start with either “Path pattern” but match the “Origin and origin groups” as described above.
+2. Change viewer protocol policy to “Redirect HTTP to HTTPS.
+3. Yes for “Restrict viewer access” and then to use our key group we created earlier, select “Trusted key groups (recommended)” and select the correct key group.
+4. For “Cache key and origin request”, AWS recommends disabling cache when using API gateway.
+     * This helps with debugging since most recent changes will be reflected rather than receiving the cache.
+5. “Response headers policy” use “CORS-With-Preflight” to be able to access S3 through CloudFront.
+6. “Function associations” can be left alone since API gateway invokes the Lambda function.
+
+This concludes the setup for the AWS services used in this project.
+
+## PROBLEMS ENCOUNTERED:
+
+Naturally due to my lack of experience with AWS services and HLS protocol, I encountered a few problems throughout the software development cycle of this project. However, by taking time to research and test different solutions I was able to make it work. Here are a couple of problems that helped me better understand how to use the technologies I was using:
+
+1) One of the significant problems was I received status 500 responses while trying to integrate Lambda with API gateway. The response would return “Invalid permissions on Lambda function”. I had the API gateway Lambda integration request configurations properly set up as well as Lambda’s “Resource-based policy statements” for invoke permissions, but the error persisted. Upon research, I found a simple solution of providing the execution role with a permissions policy that specifies which services can invoke Lambda functions. Previously, the execution role used had the basic Lambda execution role, which did not have the correct invocation permissions. In addition, the other 500 response I was receiving was due to API gateway not having permission to assume the provided role. The solution was also simple. API gateway needed to be added to the IAM role’s trust relationships list. I have provided a link to the solution from AWS in the “IAM POLICIES SETUP” section.
+
+2) The other significant problem I encountered was the 403 “Access denied” errors when attempting to fetch the “.ts” segment files of a video from the S3 bucket. This was a confusing error at first because the associated “.m3u8” file was stored in the same location and was successfully fetched. With a returned status 403 “Access denied”, I assumed this to be an issue with permissions. I double checked role permissions as well as the policy statements for my S3 bucket to ensure all the correct permissions were there. My next thought was with CloudFront restricted viewer access, it can also return a 403 response due to “Missing key” when the request URL is not signed. However, I confirmed that the signature was present in the request headers through the browser console network tab. I also thought of the possibility of the file not being stored at the proper location since the same response code returned in previous testing. I initially denied this possibility after I successfully fetched it with a separate endpoint on my Express server. However, was an isolated test. Upon further inspection of the request data, I realized that the path parameters were like that of the request for the “.m3u8” file. The only difference was that the parameter with “.m3u8” file name was replaced with the “.ts” file name. As mentioned earlier in this blog, the default configuration of HLS protocol fetches the resources at the same location. This finding meant that the “.ts” file was being requested from a folder in S3 that did not exist. It’s also important to note that the fetch methods for both file types are different. The “.m3u8” files are fetched through CloudFront integration with API gateway whereas the “.ts” files are fetched through a CloudFront and S3 integration. My solution was to store the files in S3 in a way that the path matches that of the “.m3u8” request, which was “/lambda_test” in my case. In addition, I had to add the path parameters to the signed URL to ensure a proper signature to access S3 through CloudFront. In a sense, the “.ts” file was not stored in the right location, but this was in part due to how I developed the project.
