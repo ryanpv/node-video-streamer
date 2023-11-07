@@ -45,4 +45,4 @@ This concludes the first part of the API gateway setup. We will return to the �
 
 The main purpose of the Lambda function will be to fetch “.m3u8” files and sign the “.ts” segments in the “.m3u8” file before returning it to the client. To create the Lambda function, I chose “Author from scratch” with a “Node.js 18x” “Runtime” configuration. With the IAM role already created, it can be selected under the “Change default execution role” drop down.
 
-![HLS-Lambda-Function](https://github.com/ryanpv/node-video-streamer/blob/main/public/HSL Lambda Func.png)
+![HLS-Lambda-Function](https://github.com/ryanpv/node-video-streamer/blob/main/public/HLS-Lambda-Func.png)
