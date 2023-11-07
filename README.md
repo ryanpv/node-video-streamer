@@ -46,3 +46,16 @@ This concludes the first part of the API gateway setup. We will return to the �
 The main purpose of the Lambda function will be to fetch “.m3u8” files and sign the “.ts” segments in the “.m3u8” file before returning it to the client. To create the Lambda function, I chose “Author from scratch” with a “Node.js 18x” “Runtime” configuration. With the IAM role already created, it can be selected under the “Change default execution role” drop down.
 
 ![HLS-Lambda-Function](https://github.com/ryanpv/node-video-streamer/blob/main/public/HLS-Lambda-Func.png)
+
+The picture above is a screenshot of the Lambda function. To store the private keys, users can use AWS SSM or Secrets Manager. To break down the business logic a bit further:
+
+1. Using the AWS SDK, a GET request will be sent to S3 to retrieve the “.m3u8” playlist/manifest file. The file has a multiline format so the “transformToString()” method from the SDK will return as a multiline string.
+2. Using the returned response, each line is separated into its own string and looped through to find the “.ts” segments for signing with the CloudFront URL.
+     * Depending on how API gateway resources are set up, the resource name/param must be included in the “url” property value when being signed with “getSignedUrl()”.
+3. After the signature is completed, all query params such as “Signature”, “Key-Pair-Id”, and “Expires”, should be split from the signed URL and appended to the “.ts” segment in the “.m3u8 file replacing the old segments.
+4. Once replacing the old segments with the signed ones are complete, ensure formatting of the modified “.m3u8” file matches the old one. (Same number of lines/spaces/etc).
+     * The initial splitting of the lines will include an additional line at the end that is an empty string. This* must be removed for the playlist to work.
+5. Return the modified “.m3u8” as the response body.
+
+Typically, CloudFront sends an event object with the request/response data accessible by “event.Resource[0].cf”. However, the integration of API gateway as an origin will change this formatting. For Lambda to be able to send a successful response, it will have to use the same formatting.
+    * See link for proper response format: https://docs.aws. amazon.com/lambda/latest/dg/services-apigateway.html#apigateway-example-event
