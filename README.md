@@ -14,14 +14,14 @@ In addition, I have implemented video upload functionality from the client, HLS 
 
 As mentioned above, I have set up an ExpressJS server to perform other actions such as video format conversion and uploading. Since I already had a server set up, I also implemented a URI endpoint to sign URLs using the “@aws-sdk/cloudfront-signer” module. This was a decision I made early in the development process because I was still getting to know how the AWS services worked. An alternative solution would be to send a request to CloudFront to trigger a Lambda function and have it return a signed URL. As you follow the blog and understand the setup with AWS services, you will be able to understand how it can be done. Nevertheless, this is the flow of the request for this project:
 
-1)	Client sends a request to the server for a specific video.
-2)	Server signs the CloudFront URL that includes the video file name (“.m3u8” file) and returns it to the client.
-3)	Client uses that URL to send a request through CloudFront.
-4)	CloudFront matches behaviour with the “.m3u8” file and forwards the request to an API gateway “GET” resource.
-5)	API gateway triggers a Lambda function.
-6)	The Lambda function fetches the “.m3u8” file, modifies it by appending signatures to the “.ts” segment file names, then returns the “.m3u8” file to the client.
-7)	Client reads the “.m3u8” file and begins requesting for the “.ts” file segments through the CloudFront URL
-8)	CloudFront then matches the behaviour to the “.ts” file and forwards the request to the S3 bucket, which then continues to return the segments.
+1. Client sends a request to the server for a specific video.
+2. Server signs the CloudFront URL that includes the video file name (“.m3u8” file) and returns it to the client.
+3. Client uses that URL to send a request through CloudFront.
+4. CloudFront matches behaviour with the “.m3u8” file and forwards the request to an API gateway “GET” resource.
+5. API gateway triggers a Lambda function.
+6. The Lambda function fetches the “.m3u8” file, modifies it by appending signatures to the “.ts” segment file names, then returns the “.m3u8” file to the client.
+7. Client reads the “.m3u8” file and begins requesting for the “.ts” file segments through the CloudFront URL
+8. CloudFront then matches the behaviour to the “.ts” file and forwards the request to the S3 bucket, which then continues to return the segments.
 
 To reiterate, the AWS services I am using to stream the videos are CloudFront, API Gateway, Lambda, and S3. For added layers of protection for resources stored in S3, I configured it to block all public access and access resources through CloudFront signed URLs. Serving files through a CloudFront CDN enhances performance. CDNs optimize performance by reducing physical distance between the data and client. Data is served from the closest CDN cache location. Additionally, CDNs will use minification and file compression behind the scenes to improve the speeds for content delivery. API Gateway and Lambda functions fetch the manifest file and sign the “.ts” segments.
 
