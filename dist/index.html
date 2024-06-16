@@ -46,12 +46,12 @@
       const video = document.getElementById("video");
       const videoSrc = getvid.cloudfrontUrl
 
-      if (Hls.isSupported()) {
+      if (Hls.isSupported()) { // check if browser supports HLS
         const hls = new Hls();
 
-        hls.loadSource(videoSrc);
-        hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        hls.loadSource(videoSrc); // source of video - S3 signed url
+        hls.attachMedia(video); // bind video element and hls instance
+        hls.on(Hls.Events.MANIFEST_PARSED, () => { // trigger callback after manifest is parsed after it is downloaded
           video.play();
         })
       } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
